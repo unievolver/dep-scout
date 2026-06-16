@@ -10,9 +10,9 @@
   "version": "0.2.0",
   "packages": [
     {
-      "registryType": "cargo",
-      "identifier": "dep-scout",
-      "version": "0.2.0",
+      "registryType": "mcpb",
+      "identifier": "https://github.com/unievolver/dep-scout/releases/download/v0.2.0/dep-scout-0.2.0.mcpb",
+      "fileSha256": "2f0e966879bc755b58471ca3707111ed5d79472c0b4fccedb73778a32afb1e66",
       "transport": {
         "type": "stdio"
       }

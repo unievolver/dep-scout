@@ -2,5 +2,7 @@
 **/*.rs.bk
 *.pdb
 .DS_Store
+.mcpb/
+*.mcpb
 mcp-publisher.exe
 mcp-publisher.tar.gz

@@ -1,0 +1,37 @@
+{
+  "manifest_version": "0.3",
+  "name": "dep-scout",
+  "display_name": "dep-scout",
+  "version": "0.2.0",
+  "description": "Help AI agents find and evaluate mature packages across 6 ecosystems instead of reinventing them.",
+  "long_description": "dep-scout searches crates.io, npm, PyPI, Go, Maven Central and NuGet for mature packages, scores reuse quality (popularity, maintenance, stability), flags OSV security advisories and license-compliance risks, and can search the official MCP registry. No API keys required.",
+  "author": {
+    "name": "unievolver",
+    "url": "https://github.com/unievolver"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unievolver/dep-scout.git"
+  },
+  "homepage": "https://github.com/unievolver/dep-scout",
+  "documentation": "https://github.com/unievolver/dep-scout#readme",
+  "server": {
+    "type": "binary",
+    "entry_point": "server/dep-scout",
+    "mcp_config": {
+      "command": "${__dirname}/server/dep-scout",
+      "args": [],
+      "env": {}
+    }
+  },
+  "tools": [
+    { "name": "find_packages", "description": "Search a package registry and rank candidates by reuse quality" },
+    { "name": "inspect_package", "description": "Deep-dive one package: license, OSV vulns, deprecation, downloads" },
+    { "name": "find_mcp_servers", "description": "Search the official MCP registry for existing servers" }
+  ],
+  "keywords": ["mcp", "dependencies", "security", "osv", "rust", "npm", "pypi"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["win32", "darwin", "linux"]
+  }
+}

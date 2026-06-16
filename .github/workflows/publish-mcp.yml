@@ -6,7 +6,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -16,10 +16,29 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Publish crate to crates.io
-        run: cargo publish --locked
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Build Linux binary
+        run: cargo build --release --locked
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install mcpb CLI
+        run: pnpm add -g @anthropic-ai/mcpb
+
+      - name: Pack MCPB bundle
+        run: |
+          mkdir -p mcpb/server
+          cp target/release/dep-scout mcpb/server/dep-scout
+          cd mcpb && mcpb pack
+          mv mcpb.mcpb dep-scout-${GITHUB_REF_NAME#refs/tags/}.mcpb
+          sha256sum dep-scout-${GITHUB_REF_NAME#refs/tags/}.mcpb
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mcpb/dep-scout-*.mcpb
+          generate_release_notes: true
 
       - name: Install mcp-publisher
         run: |
@@ -28,7 +47,10 @@ jobs:
       - name: Set version in server.json
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
+          SHA=$(sha256sum mcpb/dep-scout-v${VERSION}.mcpb | awk '{print $1}')
+          jq --arg v "$VERSION" --arg sha "$SHA" \
+            '.version = $v | .packages[0].identifier = "https://github.com/unievolver/dep-scout/releases/download/v\($v)/dep-scout-\($v).mcpb" | .packages[0].fileSha256 = $sha' \
+            server.json > server.tmp && mv server.tmp server.json
 
       - name: Authenticate to MCP Registry
         run: ./mcp-publisher login github-oidc
