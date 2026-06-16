@@ -30,9 +30,11 @@ jobs:
         run: |
           mkdir -p mcpb/server
           cp target/release/dep-scout mcpb/server/dep-scout
-          cd mcpb && mcpb pack
-          mv mcpb.mcpb dep-scout-${GITHUB_REF_NAME#refs/tags/}.mcpb
-          sha256sum dep-scout-${GITHUB_REF_NAME#refs/tags/}.mcpb
+          cd mcpb
+          mcpb pack
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          mv mcpb.mcpb "dep-scout-${VERSION}.mcpb"
+          sha256sum "dep-scout-${VERSION}.mcpb"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

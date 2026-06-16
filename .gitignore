@@ -2,7 +2,8 @@
 **/*.rs.bk
 *.pdb
 .DS_Store
-.mcpb/
+.mcpb/server/*
+!mcpb/server/.gitkeep
 *.mcpb
 mcp-publisher.exe
 mcp-publisher.tar.gz
