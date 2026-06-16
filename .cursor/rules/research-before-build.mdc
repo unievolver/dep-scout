@@ -1,0 +1,57 @@
+---
+description: 先查再造 — reuse mature packages instead of reinventing them (Rust / npm / Python)
+alwaysApply: true
+---
+
+# 先查再造 (Research before you build)
+
+Before writing any non-trivial functionality from scratch, you MUST first check
+whether a mature, well-maintained package already solves it — in whatever
+language the current project uses.
+
+## When to use crate-scout
+
+Call the `crate-scout` MCP tools whenever you are about to:
+
+- Implement a capability that is likely a solved problem (HTTP client, parsing,
+  serialization, auth, retries, rate limiting, dates, state management, UI
+  components, validation, CLI args, async utilities…).
+- Add or choose a dependency.
+- Hand-roll an algorithm or protocol that a library probably provides.
+- Build an MCP server (check for an existing one first).
+
+## Workflow
+
+1. Call `find_packages` with a short description of what you want to build and
+   the `ecosystem` of the current project:
+   - `rust` (crates.io) · `npm` (JS/TS/frontend) · `python` (PyPI) · `go`
+     (pkg.go.dev) · `maven` (Java/Kotlin) · `nuget` (.NET).
+   - Aliases work: `js`/`ts`/`frontend` → npm, `py` → python, `golang` → go,
+     `java`/`kotlin`/`gradle` → maven, `dotnet`/`csharp` → nuget, `rs` → rust.
+   - Examples: `{query:"async http client", ecosystem:"rust"}`,
+     `{query:"date picker", ecosystem:"frontend"}`,
+     `{query:"json", ecosystem:"dotnet"}`.
+2. Read the ranked candidates and their reuse scores:
+   - Score ≥ 78 (✅): strongly prefer reusing it.
+   - Score 58–77 (🟡): usable; address the listed warnings first.
+   - Score < 58 (🟠/🔴): be cautious; compare alternatives or justify your own.
+3. For a serious candidate, call `inspect_package` (exact name + ecosystem) to
+   verify license, deprecation/yank status, and runtime/version requirements
+   before adding the dependency. (Go: full module path; Maven: `group:artifact`.)
+4. Before writing your own MCP server, call `find_mcp_servers` to look for an
+   existing one in the official registry.
+5. Only write a feature from scratch if no suitable package exists, and say so
+   explicitly (one line) with the reason.
+
+## Notes
+
+- Pass the ecosystem of the file/project you are editing. Frontend work (React,
+  Vue, Svelte, etc.) is `npm`.
+- Python keyword search is name-oriented (PyPI has no public full-text search);
+  prefer concrete library names, or use `inspect_package` when you know it.
+
+## Principle
+
+Reusing a proven, maintained package beats reinventing it. Hand-written
+reimplementations of solved problems carry bugs, security gaps, and maintenance
+cost. Prefer the ecosystem's vetted solution.
