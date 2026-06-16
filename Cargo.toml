@@ -1,11 +1,11 @@
 [package]
-name = "crate-scout"
+name = "dep-scout"
 version = "0.2.0"
 edition = "2024"
 description = "An MCP server that helps AI agents reuse mature packages (crates.io, npm, PyPI, Go, Maven, NuGet) instead of reinventing them."
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/crate-scout/crate-scout"
+repository = "https://github.com/unievolver/dep-scout"
 keywords = ["mcp", "ai", "crates", "npm", "pypi"]
 categories = ["development-tools", "command-line-utilities"]
 

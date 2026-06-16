@@ -11,7 +11,7 @@ use serde_json::Value;
 use crate::model::{Ecosystem, Package};
 
 const USER_AGENT: &str =
-    "crate-scout/0.2 (Rust MCP tool; https://github.com/crate-scout/crate-scout)";
+    "dep-scout/0.2 (Rust MCP tool; https://github.com/unievolver/dep-scout)";
 
 /// deps.dev's internal search endpoint rejects non-browser User-Agents, so we
 /// present a browser UA only for that host.

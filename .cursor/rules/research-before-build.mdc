@@ -9,9 +9,9 @@ Before writing any non-trivial functionality from scratch, you MUST first check
 whether a mature, well-maintained package already solves it — in whatever
 language the current project uses.
 
-## When to use crate-scout
+## When to use dep-scout
 
-Call the `crate-scout` MCP tools whenever you are about to:
+Call the `dep-scout` MCP tools whenever you are about to:
 
 - Implement a capability that is likely a solved problem (HTTP client, parsing,
   serialization, auth, retries, rate limiting, dates, state management, UI

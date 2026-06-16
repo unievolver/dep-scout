@@ -5,7 +5,7 @@ description: Before implementing a feature in Rust, JavaScript/TypeScript, Pytho
 
 # 先查再造 / Research before you build
 
-A portable skill that pairs with the **crate-scout** MCP server. Its job: stop
+A portable skill that pairs with the **dep-scout** MCP server. Its job: stop
 AI agents from reinventing wheels by always checking the right registry —
 crates.io (Rust), npm (JS/TS/frontend), PyPI (Python), pkg.go.dev (Go), Maven
 Central (Java/Kotlin) or NuGet (.NET) — for a mature, maintained package first.
@@ -21,7 +21,7 @@ When you are about to build a non-trivial piece of functionality:
    `{query:"async http client", ecosystem:"rust"}`,
    `{query:"react date picker", ecosystem:"frontend"}`,
    `{query:"json", ecosystem:"dotnet"}`.
-2. **Read the scores.** crate-scout ranks candidates 0–100 on popularity,
+2. **Read the scores.** dep-scout ranks candidates 0–100 on popularity,
    maintenance recency, version stability, and metadata completeness:
    - `≥ 78` ✅ strongly recommended — reuse it.
    - `58–77` 🟡 usable — resolve the listed warnings first.

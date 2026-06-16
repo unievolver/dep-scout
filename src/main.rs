@@ -1,8 +1,8 @@
-//! crate-scout — an MCP server that enforces "先查再造" (research before you build)
+//! dep-scout — an MCP server that enforces "先查再造" (research before you build)
 //! across ecosystems.
 //!
 //! Before an AI agent writes a feature from scratch, it should check: does a
-//! mature, well-maintained package already do this? crate-scout searches
+//! mature, well-maintained package already do this? dep-scout searches
 //! crates.io (Rust), npm (JS/TS/frontend) and PyPI (Python), scores candidates
 //! on reuse quality, and can also discover existing MCP servers — so the agent
 //! reuses proven solutions instead of reinventing wheels.
@@ -57,14 +57,14 @@ struct FindMcpServersArgs {
 }
 
 #[derive(Clone)]
-struct CrateScout {
+struct DepScout {
     http: reqwest::Client,
     #[allow(dead_code)] // used by the #[tool_handler] generated impl
     tool_router: ToolRouter<Self>,
 }
 
 #[tool_router]
-impl CrateScout {
+impl DepScout {
     fn new() -> Self {
         Self {
             http: sources::http_client(),
@@ -192,7 +192,7 @@ impl CrateScout {
         }
         let q = model::score(&p);
 
-        let mut out = format!("crate-scout 详细评估：{} ({})\n\n", p.name, p.ecosystem.label());
+        let mut out = format!("dep-scout 详细评估：{} ({})\n\n", p.name, p.ecosystem.label());
         out.push_str(&render_package(0, &p, &q));
         if let Some(lic) = &p.license {
             out.push_str(&format!("\n许可证: {lic}"));
@@ -310,11 +310,11 @@ fn render_package(rank: usize, p: &Package, q: &Quality) -> String {
 }
 
 #[tool_handler]
-impl ServerHandler for CrateScout {
+impl ServerHandler for DepScout {
     fn get_info(&self) -> ServerInfo {
         let mut info = ServerInfo::default();
         info.instructions = Some(
-            "crate-scout 帮你在多语言开发中践行「先查再造」：写新功能前，先用 find_packages \
+            "dep-scout 帮你在多语言开发中践行「先查再造」：写新功能前，先用 find_packages \
              搜索 crates.io(Rust)/npm(JS·TS·前端)/PyPI(Python)/Go/Maven(Java·Kotlin)/NuGet(.NET) \
              上已有的成熟方案，用 inspect_package 评估具体候选；写 MCP server 前先用 \
              find_mcp_servers 找现成的。避免重复造轮子。"
@@ -332,13 +332,13 @@ async fn main() -> anyhow::Result<()> {
         .with_writer(std::io::stderr)
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "crate_scout=info,rmcp=warn".into()),
+                .unwrap_or_else(|_| "dep_scout=info,rmcp=warn".into()),
         )
         .init();
 
-    tracing::info!("starting crate-scout MCP server on stdio");
+    tracing::info!("starting dep-scout MCP server on stdio");
 
-    let service = CrateScout::new().serve(stdio()).await.inspect_err(|e| {
+    let service = DepScout::new().serve(stdio()).await.inspect_err(|e| {
         tracing::error!("failed to start server: {e}");
     })?;
     service.waiting().await?;

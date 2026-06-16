@@ -1,9 +1,9 @@
-# crate-scout
+# dep-scout
 
 **先查再造 (research before you build)** — an MCP server that stops AI coding
 agents from reinventing the wheel.
 
-Before an agent writes a feature from scratch, crate-scout searches the right
+Before an agent writes a feature from scratch, dep-scout searches the right
 registry — **crates.io** (Rust), **npm** (JS/TS/frontend), **PyPI** (Python),
 **pkg.go.dev** (Go), **Maven Central** (Java/Kotlin) or **NuGet** (.NET) — for a
 mature package that already solves the problem, and scores each candidate on
@@ -19,7 +19,7 @@ data source is a keyless public API.
 ## Why
 
 AI now writes a lot of code — and its worst habit is reimplementing solved
-problems, picking abandoned libraries, or hallucinating packages. crate-scout
+problems, picking abandoned libraries, or hallucinating packages. dep-scout
 turns the best practice *"don't build it if a maintained package already does
 it"* into a tool the agent calls automatically, across languages.
 
@@ -81,7 +81,7 @@ Requires a recent Rust toolchain (edition 2024).
 cargo build --release
 ```
 
-The binary is produced at `target/release/crate-scout` (`.exe` on Windows).
+The binary is produced at `target/release/dep-scout` (`.exe` on Windows).
 
 ## Use in Cursor
 
@@ -93,15 +93,15 @@ The binary is produced at `target/release/crate-scout` (`.exe` on Windows).
    ```json
    {
      "mcpServers": {
-       "crate-scout": {
-         "command": "/absolute/path/to/crate-scout/target/release/crate-scout"
+       "dep-scout": {
+         "command": "/absolute/path/to/dep-scout/target/release/dep-scout"
        }
      }
    }
    ```
 
-   On Windows use the full `...\\target\\release\\crate-scout.exe` path.
-3. Restart Cursor; you should see `crate-scout` with its tools enabled.
+   On Windows use the full `...\\target\\release\\dep-scout.exe` path.
+3. Restart Cursor; you should see `dep-scout` with its tools enabled.
 4. The [`.cursor/rules/research-before-build.mdc`](.cursor/rules/research-before-build.mdc)
    rule makes the agent search before building. A portable, client-agnostic
    version lives at [`skill/SKILL.md`](skill/SKILL.md).
