@@ -85,9 +85,9 @@ The binary is produced at `target/release/dep-scout` (`.exe` on Windows).
 
 ## Use in Cursor
 
-1. Build the release binary (above).
-2. Register the MCP server. A ready-made project config lives at
-   [`.cursor/mcp.json`](.cursor/mcp.json). For global use, add the same entry to
+1. Register the MCP server. A portable project config lives at
+   [`.cursor/mcp.json`](.cursor/mcp.json) — it uses `cargo run --release` so no
+   machine-specific paths are required. For global use, add an entry to
    `~/.cursor/mcp.json`:
 
    ```json
@@ -100,9 +100,10 @@ The binary is produced at `target/release/dep-scout` (`.exe` on Windows).
    }
    ```
 
-   On Windows use the full `...\\target\\release\\dep-scout.exe` path.
-3. Restart Cursor; you should see `dep-scout` with its tools enabled.
-4. The [`.cursor/rules/research-before-build.mdc`](.cursor/rules/research-before-build.mdc)
+   On Windows use `...\\target\\release\\dep-scout.exe`. Build the release binary
+   first (`cargo build --release` above) when using a direct binary path.
+2. Restart Cursor; you should see `dep-scout` with its tools enabled.
+3. The [`.cursor/rules/research-before-build.mdc`](.cursor/rules/research-before-build.mdc)
    rule makes the agent search before building. A portable, client-agnostic
    version lives at [`skill/SKILL.md`](skill/SKILL.md).
 
