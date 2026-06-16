@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.unievolver/dep-scout",
+  "title": "dep-scout",
+  "description": "Help AI agents find and evaluate mature packages across 6 ecosystems instead of reinventing them.",
+  "repository": {
+    "url": "https://github.com/unievolver/dep-scout",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "cargo",
+      "identifier": "dep-scout",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

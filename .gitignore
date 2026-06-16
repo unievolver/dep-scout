@@ -2,3 +2,5 @@
 **/*.rs.bk
 *.pdb
 .DS_Store
+mcp-publisher.exe
+mcp-publisher.tar.gz

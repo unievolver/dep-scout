@@ -133,6 +133,14 @@ src/
 skill/SKILL.md                      # portable skill for any MCP client
 ```
 
+## MCP Registry
+
+Published to the [official MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.unievolver/dep-scout`. Install via `cargo install dep-scout`, then point
+your MCP client at the `dep-scout` binary (stdio).
+
+- MCP Registry name: `mcp-name: io.github.unievolver/dep-scout`
+
 ## License
 
 MIT
