@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "dep-scout": {
-      "command": "D:\\Projects\\rust\\dep-scout\\target\\release\\dep-scout.exe",
+      "command": "D:\\Projects\\rust\\crate-scout\\target\\release\\dep-scout.exe",
       "args": []
     }
   }
