@@ -88,6 +88,18 @@ impl Ecosystem {
         }
     }
 
+    /// OSV.dev ecosystem identifier for vulnerability queries.
+    pub fn osv_name(&self) -> &'static str {
+        match self {
+            Ecosystem::Rust => "crates.io",
+            Ecosystem::Npm => "npm",
+            Ecosystem::Python => "PyPI",
+            Ecosystem::Go => "Go",
+            Ecosystem::Maven => "Maven",
+            Ecosystem::Nuget => "NuGet",
+        }
+    }
+
     /// What a deprecated/withdrawn latest release is called in this ecosystem.
     fn deprecation_term(&self) -> &'static str {
         match self {
@@ -124,6 +136,16 @@ pub struct Package {
     pub deprecated: Option<bool>,
     /// MSRV (Rust), engines.node (npm), or requires_python (PyPI).
     pub min_runtime: Option<String>,
+    /// Known security advisories affecting this version (from OSV.dev).
+    pub vulns: Vec<Vuln>,
+}
+
+/// A security advisory affecting a package version (OSV.dev).
+#[derive(Debug, Clone)]
+pub struct Vuln {
+    pub id: String,
+    pub summary: Option<String>,
+    pub severity: Option<String>,
 }
 
 impl Package {
@@ -144,6 +166,7 @@ impl Package {
             license: None,
             deprecated: None,
             min_runtime: None,
+            vulns: Vec::new(),
         }
     }
 
@@ -279,12 +302,32 @@ pub fn score(p: &Package) -> Quality {
     }
     score += meta.min(15);
 
-    // --- Hard penalty. ---
+    // --- License compliance flag (no score change;商业合规提示). ---
+    if let Some(lic) = p.license.as_deref().and_then(license_risk) {
+        warnings.push(lic.to_string());
+    }
+
+    // --- Hard penalties. ---
     if p.deprecated == Some(true) {
         score -= 40;
         warnings.push(format!(
             "⚠️ 最新版本已被 {}，不要直接依赖",
             p.ecosystem.deprecation_term()
+        ));
+    }
+    if !p.vulns.is_empty() {
+        score -= 35;
+        let has_high = p
+            .vulns
+            .iter()
+            .any(|v| matches!(v.severity.as_deref(), Some("HIGH") | Some("CRITICAL")));
+        let ids: Vec<&str> = p.vulns.iter().take(3).map(|v| v.id.as_str()).collect();
+        warnings.push(format!(
+            "🛑 已知安全漏洞 {} 个{}（{}{}）",
+            p.vulns.len(),
+            if has_high { "，含高危" } else { "" },
+            ids.join(", "),
+            if p.vulns.len() > 3 { " …" } else { "" }
         ));
     }
 
@@ -301,6 +344,25 @@ pub fn score(p: &Package) -> Quality {
         verdict,
         signals,
         warnings,
+    }
+}
+
+/// Flag licenses that carry commercial/compliance risk (copyleft etc.).
+/// Returns a short Chinese warning, or None for permissive/unknown licenses.
+pub fn license_risk(license: &str) -> Option<&'static str> {
+    let l = license.to_uppercase();
+    if l.contains("AGPL") {
+        Some("许可证 AGPL：强 copyleft，联网服务也需开源，商业闭源严禁直接用")
+    } else if l.contains("LGPL") {
+        Some("许可证 LGPL：弱 copyleft，静态链接/修改需注意开源义务")
+    } else if l.contains("GPL") {
+        Some("许可证 GPL：copyleft，可能要求你的代码一并开源，商业闭源慎用")
+    } else if l.contains("MPL") || l.contains("EPL") || l.contains("CDDL") {
+        Some("许可证为文件级 copyleft（MPL/EPL/CDDL），修改其文件需开源")
+    } else if l.contains("SSPL") || l.contains("BUSL") || l.contains("BSL") {
+        Some("许可证为商用受限型（SSPL/BUSL），商业使用前务必核对条款")
+    } else {
+        None
     }
 }
 

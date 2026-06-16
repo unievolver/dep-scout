@@ -8,9 +8,10 @@ registry — **crates.io** (Rust), **npm** (JS/TS/frontend), **PyPI** (Python),
 **pkg.go.dev** (Go), **Maven Central** (Java/Kotlin) or **NuGet** (.NET) — for a
 mature package that already solves the problem, and scores each candidate on
 **reuse quality** (popularity, maintenance recency, version stability,
-metadata). The agent then reuses a proven solution instead of hand-rolling buggy
-code. It can also search the official **MCP registry** so the agent reuses an
-existing MCP server instead of building one.
+metadata) — and flags **known security advisories** ([OSV](https://osv.dev)) and
+**license-compliance risks**. The agent then reuses a proven, safe solution
+instead of hand-rolling buggy code. It can also search the official **MCP
+registry** so the agent reuses an existing MCP server instead of building one.
 
 Works with **Cursor** (and any MCP client) over stdio. **No API keys** — every
 data source is a keyless public API.
@@ -27,7 +28,7 @@ it"* into a tool the agent calls automatically, across languages.
 | Tool | What it does |
 | --- | --- |
 | `find_packages` | Given a feature description + `ecosystem` (`rust` \| `npm` \| `python` \| `go` \| `maven` \| `nuget`), returns ranked candidates with a 0–100 reuse score, signals, and warnings. |
-| `inspect_package` | Deep-dives one package by exact name + ecosystem: license, deprecation/yank status, runtime/version requirements, downloads or GitHub stars, last-update recency. |
+| `inspect_package` | Deep-dives one package by exact name + ecosystem: license (+ compliance flag), known OSV vulnerabilities, deprecation/yank status, runtime/version requirements, downloads or GitHub stars, last-update recency. |
 | `find_mcp_servers` | Searches the official MCP registry for existing MCP servers (name, install info, repo, status) — so you don't rebuild one. |
 
 `ecosystem` accepts aliases: `js`/`ts`/`javascript`/`typescript`/`node`/`frontend` → **npm**,
@@ -41,6 +42,10 @@ it"* into a tool the agent calls automatically, across languages.
 - **Maintenance** (≤30) — how recently the package was updated.
 - **Stability** (≤15) — stable `1.0+` vs `0.x`; penalty for pre-releases.
 - **Metadata** (≤15) — repository, docs/homepage, license present.
+- **Security penalty** — known [OSV](https://osv.dev) advisories on the resolved
+  version sink the score and de-rank the candidate.
+- **License flag** — copyleft / commercially-restricted licenses (GPL, AGPL,
+  LGPL, MPL, SSPL, BUSL…) are surfaced as compliance warnings.
 - **Penalty** — latest version yanked (crates/PyPI) or deprecated (npm).
 
 Verdicts: `≥78` ✅ strongly recommend · `58–77` 🟡 usable · `38–57` 🟠 cautious ·
@@ -61,6 +66,7 @@ and high quality.
 | Java/Kotlin | Maven Central solr search | deps.dev v3 | GitHub stars |
 | .NET | NuGet search API | NuGet search API | NuGet total downloads |
 | MCP servers | official `registry.modelcontextprotocol.io` | — | — |
+| Security | [OSV.dev](https://osv.dev) `query` (detail) + `querybatch` (flag) across all ecosystems | | |
 
 > **Python note:** PyPI has no public full-text search API (the legacy XML-RPC
 > search is gone and the web search is bot-blocked), so Python search is
@@ -111,8 +117,7 @@ corrupt the protocol stream on stdout.
 - More ecosystems: Ruby (RubyGems), PHP (Packagist), Dart/Flutter (pub.dev).
 - Per-ecosystem popularity calibration (npm/PyPI volumes dwarf crates.io).
 - Last-update recency for NuGet; richer Maven search ranking.
-- Deeper quality signals from the source repo (open issues, release cadence,
-  security advisories such as RUSTSEC / OSV).
+- Deeper repo health signals (open issues, release cadence, maintainer count).
 - A curated trust/quality dataset — the real moat over a plain registry mirror.
 
 ## Project layout

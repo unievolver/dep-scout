@@ -920,6 +920,124 @@ async fn nuget_get(http: &reqwest::Client, name: &str) -> anyhow::Result<Package
 }
 
 // ===========================================================================
+// OSV.dev — known security advisories (keyless)
+// ===========================================================================
+
+use crate::model::Vuln;
+
+#[derive(Debug, Deserialize)]
+struct OsvResp {
+    #[serde(default)]
+    vulns: Vec<OsvVuln>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OsvVuln {
+    id: String,
+    summary: Option<String>,
+    #[serde(default)]
+    database_specific: OsvDbSpecific,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct OsvDbSpecific {
+    severity: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OsvBatchResp {
+    #[serde(default)]
+    results: Vec<OsvBatchResult>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OsvBatchResult {
+    #[serde(default)]
+    vulns: Vec<OsvBatchVuln>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OsvBatchVuln {
+    id: String,
+}
+
+/// OSV uses plain semver; Go module versions carry a leading "v".
+fn osv_version(version: &str) -> &str {
+    version.trim().trim_start_matches('v')
+}
+
+/// Detailed advisory lookup for a single package version.
+pub async fn osv_query(
+    http: &reqwest::Client,
+    eco: Ecosystem,
+    name: &str,
+    version: &str,
+) -> anyhow::Result<Vec<Vuln>> {
+    let body = serde_json::json!({
+        "version": osv_version(version),
+        "package": { "name": name, "ecosystem": eco.osv_name() }
+    });
+    let resp = http
+        .post("https://api.osv.dev/v1/query")
+        .json(&body)
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<OsvResp>()
+        .await?;
+    Ok(resp
+        .vulns
+        .into_iter()
+        .map(|v| Vuln {
+            id: v.id,
+            summary: v.summary,
+            severity: v.database_specific.severity,
+        })
+        .collect())
+}
+
+/// Batched advisory check: returns the vulnerability id list for each input,
+/// in the same order. Cheap way to flag many candidates with one request.
+pub async fn osv_querybatch(
+    http: &reqwest::Client,
+    queries: &[(Ecosystem, String, String)],
+) -> Vec<Vec<String>> {
+    let empty = vec![Vec::new(); queries.len()];
+    if queries.is_empty() {
+        return empty;
+    }
+    let body = serde_json::json!({
+        "queries": queries
+            .iter()
+            .map(|(eco, name, version)| serde_json::json!({
+                "version": osv_version(version),
+                "package": { "name": name, "ecosystem": eco.osv_name() }
+            }))
+            .collect::<Vec<_>>()
+    });
+    let parsed = async {
+        http.post("https://api.osv.dev/v1/querybatch")
+            .json(&body)
+            .send()
+            .await
+            .ok()?
+            .json::<OsvBatchResp>()
+            .await
+            .ok()
+    }
+    .await;
+
+    match parsed {
+        Some(resp) if resp.results.len() == queries.len() => resp
+            .results
+            .into_iter()
+            .map(|r| r.vulns.into_iter().map(|v| v.id).collect())
+            .collect(),
+        _ => empty,
+    }
+}
+
+// ===========================================================================
 // Official MCP registry (for find_mcp_servers)
 // ===========================================================================
 

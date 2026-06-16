@@ -10,7 +10,7 @@
 mod model;
 mod sources;
 
-use model::{Ecosystem, Package, Quality};
+use model::{Ecosystem, Package, Quality, Vuln};
 use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content, ServerCapabilities, ServerInfo};
@@ -129,6 +129,25 @@ impl CrateScout {
         scored.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
         scored.truncate(limit as usize);
 
+        // Flag known security advisories for the finalists in one batched call,
+        // then re-score so vulnerable packages are visibly penalised.
+        let queries: Vec<(Ecosystem, String, String)> = scored
+            .iter()
+            .map(|(p, _, _)| (p.ecosystem, p.name.clone(), p.display_version().to_string()))
+            .collect();
+        let vuln_ids = sources::osv_querybatch(&self.http, &queries).await;
+        for ((p, q, combined), ids) in scored.iter_mut().zip(vuln_ids) {
+            if !ids.is_empty() {
+                p.vulns = ids
+                    .into_iter()
+                    .map(|id| Vuln { id, summary: None, severity: None })
+                    .collect();
+                *q = model::score(p);
+                *combined -= 50.0; // sink vulnerable packages, keep relevance otherwise
+            }
+        }
+        scored.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
         let mut out = format!(
             "「先查再造」结果：在 {} 搜索 \"{query}\"，{} 个候选（按相关度 + 复用质量综合排序）。\n\
              优先复用得分高、且确实对口的；动手自己写之前，请确认没有更合适的现成包。\n\n",
@@ -159,11 +178,18 @@ impl CrateScout {
             return Err(McpError::invalid_params("name must not be empty", None));
         }
 
-        let p = sources::inspect(&self.http, args.ecosystem, name)
+        let mut p = sources::inspect(&self.http, args.ecosystem, name)
             .await
             .map_err(|e| {
                 McpError::internal_error(format!("could not fetch '{name}': {e}"), None)
             })?;
+
+        // Pull known security advisories for the resolved version.
+        if let Some(ver) = p.stable_version.clone().or_else(|| p.latest_version.clone()) {
+            if let Ok(vulns) = sources::osv_query(&self.http, args.ecosystem, &p.name, &ver).await {
+                p.vulns = vulns;
+            }
+        }
         let q = model::score(&p);
 
         let mut out = format!("crate-scout 详细评估：{} ({})\n\n", p.name, p.ecosystem.label());
@@ -178,6 +204,20 @@ impl CrateScout {
             out.push_str(&format!("\n累计下载: {}", model::fmt_num(total)));
         }
         out.push_str(&format!("\n安装: {}", p.ecosystem.install_hint(&p.name)));
+
+        if p.vulns.is_empty() {
+            out.push_str("\n安全: OSV 未发现该版本的已知漏洞 ✅");
+        } else {
+            out.push_str(&format!("\n安全: 🛑 OSV 发现 {} 个已知漏洞：", p.vulns.len()));
+            for v in p.vulns.iter().take(6) {
+                let sev = v.severity.as_deref().unwrap_or("?");
+                let sum = v.summary.as_deref().unwrap_or("");
+                out.push_str(&format!("\n  - [{sev}] {} {}", v.id, sum));
+            }
+            if p.vulns.len() > 6 {
+                out.push_str(&format!("\n  - …其余 {} 个", p.vulns.len() - 6));
+            }
+        }
 
         Ok(CallToolResult::success(vec![Content::text(out)]))
     }
